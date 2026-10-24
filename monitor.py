@@ -113,14 +113,28 @@ def arquivo_seguro(ticker):
 
 
 # ---------------------------------------------------------------- Macro (BCB)
+def get_bcb(url, tentativas=3):
+    """A API do Banco Central às vezes falha (502, lentidão): tenta de novo antes de desistir."""
+    for i in range(tentativas):
+        try:
+            r = requests.get(url, timeout=30)
+            r.raise_for_status()
+            return r.json()
+        except Exception:
+            if i == tentativas - 1:
+                raise
+            time.sleep(5 * (i + 1))
+
+
 def sgs(codigo, n=1):
-    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados/ultimos/{n}?formato=json"
-    r = requests.get(url, timeout=30)
-    r.raise_for_status()
-    return [(d["data"], float(d["valor"])) for d in r.json()]
+    dados = get_bcb(f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados/ultimos/{n}?formato=json")
+    return [(d["data"], float(d["valor"])) for d in dados]
 
 
-def coletar_macro():
+def coletar_macro(anterior_macro=None):
+    """Indicadores do Banco Central. Se uma série falhar, mantém o último valor bom: sem isso, os sinais
+    que comparam com o CDI mudariam artificialmente e poderiam disparar alertas falsos."""
+    velho = anterior_macro or {}
     macro = {}
     series = {
         "selic_meta": 432,      # Meta Selic (% a.a.)
@@ -134,18 +148,22 @@ def coletar_macro():
             macro[nome] = valor
             macro[nome + "_data"] = data
         except Exception as e:
-            erros.append(f"Banco Central ({nome}): {e}")
+            if velho.get(nome) is not None:
+                macro[nome] = velho[nome]
+                macro[nome + "_data"] = velho.get(nome + "_data")
+                erros.append(f"Banco Central ({nome}): fora do ar, mantido o último valor ({velho.get(nome + '_data')})")
+            else:
+                erros.append(f"Banco Central ({nome}): {e}")
     try:
         # CDI efetivamente acumulado nos últimos 12 meses (série diária)
         fim = agora().date()
-        url = (f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json"
-               f"&dataInicial={fim - dt.timedelta(days=365):%d/%m/%Y}&dataFinal={fim:%d/%m/%Y}")
-        r = requests.get(url, timeout=30)
-        r.raise_for_status()
-        diarios = [(d["data"], float(d["valor"])) for d in r.json()]
-        macro["cdi_12m"] = num((np.prod([1 + v / 100 for _, v in diarios]) - 1) * 100)
+        dados = get_bcb(f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json"
+                        f"&dataInicial={fim - dt.timedelta(days=365):%d/%m/%Y}&dataFinal={fim:%d/%m/%Y}")
+        macro["cdi_12m"] = num((np.prod([1 + float(d["valor"]) / 100 for d in dados]) - 1) * 100)
     except Exception as e:
-        erros.append(f"Banco Central (CDI 12 meses): {e}")
+        if velho.get("cdi_12m") is not None:
+            macro["cdi_12m"] = velho["cdi_12m"]
+        erros.append(f"Banco Central (CDI 12 meses): fora do ar, mantido o último valor" if velho.get("cdi_12m") else f"Banco Central (CDI 12 meses): {e}")
     if macro.get("selic_meta") is not None and macro.get("ipca_12m") is not None:
         real = ((1 + macro["selic_meta"] / 100) / (1 + macro["ipca_12m"] / 100) - 1) * 100
         macro["juro_real"] = num(real)
@@ -780,7 +798,7 @@ def main():
     velho = anterior("data.json", {})
     # Memória da rodada anterior; o state.json da raiz só serve de ponto de partida na primeira publicação
     estado = anterior("state.json", carregar_json(os.path.join(ROOT, "state.json"), {}))
-    macro = coletar_macro()
+    macro = coletar_macro(velho.get("macro"))
 
     tesouro = None
     try:
