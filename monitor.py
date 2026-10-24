@@ -146,6 +146,8 @@ def coletar_tesouro(macro, cfg):
         percentil = float((serie <= taxa).mean() * 100) if len(serie) > 50 else None
         sinal, explicacao = classificar_tesouro(tipo, taxa, percentil, macro, cfg)
         anos = (row["Data Vencimento"] - ultima).days / 365.25
+        faixa = len(serie) > 50
+        pu = float(row["PU Compra Manha"])
         titulos.append({
             "id": f"{tipo} {row['Data Vencimento']:%Y}",
             "tipo": tipo,
@@ -154,6 +156,13 @@ def coletar_tesouro(macro, cfg):
             "taxa": num(taxa),
             "preco": num(row["PU Compra Manha"]),
             "percentil_5a": num(percentil, 0),
+            "taxa_min_5a": num(serie.min()) if faixa else None,
+            "taxa_med_5a": num(serie.median()) if faixa else None,
+            "taxa_max_5a": num(serie.max()) if faixa else None,
+            "taxa_venda": num(row.get("Taxa Venda Manha")),
+            "preco_venda": num(row.get("PU Venda Manha")),
+            # Regra do Tesouro Direto: compra mínima de 1% do título, respeitando R$ 30
+            "minimo": num(max(30.0, math.ceil(pu) / 100)),
             "sinal": sinal,
             "explicacao": explicacao,
             "risco": "baixo" if "Selic" in tipo else ("médio" if anos < 6 else "alto (se vender antes)"),
@@ -257,6 +266,13 @@ def analisar(ativo, df, cdi_ano):
         risco = "alto"
 
     spark = [num(v) for v in close.iloc[-90:].tolist()]
+
+    # Histórico de até 2 anos para o gráfico do app: data inicial + diferença em dias entre pregões
+    casas = 4 if p < 10 else 2
+    hist = close.iloc[-520:]
+    dias = [d.date() for d in hist.index]
+    hist_dt = [0] + [(dias[i] - dias[i - 1]).days for i in range(1, len(dias))]
+
     return {
         "ticker": ativo["ticker"],
         "codigo": ativo["ticker"].replace(".SA", ""),
@@ -278,6 +294,9 @@ def analisar(ativo, df, cdi_ano):
         "sinal": rotulo(score),
         "motivos": [{"tipo": t, "texto": m} for t, m in motivos],
         "spark": spark,
+        "max_12m": num(maxima, casas),
+        "min_12m": num(um_ano.min(), casas),
+        "hist": {"t0": dias[0].isoformat(), "dt": hist_dt, "c": [num(v, casas) for v in hist.tolist()]},
     }
 
 
@@ -380,6 +399,7 @@ def main():
     if not cfg:
         raise SystemExit("config.json não encontrado ou inválido")
 
+    anterior = carregar_json(DATA_PATH, {})
     macro = coletar_macro()
 
     tesouro = None
@@ -387,7 +407,7 @@ def main():
         tesouro = coletar_tesouro(macro, cfg)
     except Exception as e:
         erros.append(f"Tesouro Direto: {e}")
-        tesouro = carregar_json(DATA_PATH, {}).get("tesouro")  # mantém o último dado bom
+        tesouro = anterior.get("tesouro")  # mantém o último dado bom
 
     ativos = []
     try:
@@ -399,12 +419,19 @@ def main():
     alertas, novo_estado = montar_alertas(ativos, tesouro, cfg, estado)
     enviar(alertas, cfg)
 
+    quando = agora().strftime("%d/%m/%Y %H:%M")
+    historico = [{"quando": quando, "titulo": a["titulo"], "msg": a["msg"]} for a in alertas]
+    historico += anterior.get("historico_alertas", [])
+
     saida = {
-        "atualizado": agora().strftime("%d/%m/%Y %H:%M"),
+        "versao": 2,
+        "atualizado": quando,
         "macro": macro,
         "tesouro": tesouro,
         "ativos": ativos,
         "alertas_rodada": [a["titulo"] for a in alertas],
+        "historico_alertas": historico[:40],
+        "alertas_cfg": cfg["alertas"],
         "erros": erros,
     }
     os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
