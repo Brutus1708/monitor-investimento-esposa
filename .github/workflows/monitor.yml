@@ -1,0 +1,43 @@
+name: Monitor de Investimentos
+
+on:
+  schedule:
+    # A cada 30 min, seg-sex, das 9h às 18h (horário de Brasília = UTC-3)
+    - cron: "*/30 12-21 * * 1-5"
+    # Fim de semana: 2x por dia (cripto não para)
+    - cron: "0 13,21 * * 0,6"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  monitorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Rodar monitor
+        run: python monitor.py
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PAGES_URL: ${{ vars.PAGES_URL }}
+
+      - name: Salvar resultados
+        run: |
+          git config user.name "monitor-bot"
+          git config user.email "monitor-bot@users.noreply.github.com"
+          git add docs/data.json state.json
+          git diff --staged --quiet || (git commit -m "Atualiza dados $(date -u +%F_%H%M)" && git pull --rebase && git push)

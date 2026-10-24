@@ -1,0 +1,9 @@
+{
+  "name": "Monitor de investimentos",
+  "short_name": "Monitor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#E9EEF3",
+  "theme_color": "#15263F",
+  "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}

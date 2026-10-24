@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monitor de investimentos</title>
+<meta name="theme-color" content="#E9EEF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1828" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Monitor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EEF3; --surface:#FFFFFF; --ink:#15263F; --muted:#5B6B82; --line:#D5DDE7;
+  --buy:#0F7B57; --buy-soft:#DDF2E9; --sell:#B53A2A; --sell-soft:#F8E1DD;
+  --neutral:#7A869A; --neutral-soft:#E7EBF1; --accent:#1F4FB8; --warn:#9A6408; --warn-soft:#F7EBD3;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0E1828; --surface:#16233A; --ink:#E4EBF5; --muted:#93A3BB; --line:#26354F;
+    --buy:#3CC48E; --buy-soft:#123A2E; --sell:#F07662; --sell-soft:#43211D;
+    --neutral:#93A3BB; --neutral-soft:#1F2D46; --accent:#7FA6FF; --warn:#E5B357; --warn-soft:#3A2E14;
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 40px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+header{padding:20px 0 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:600 26px/1.1 "IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;margin:0;letter-spacing:-.01em}
+.updated{color:var(--muted);font-size:13px;margin-top:4px}
+.refresh{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;margin:4px 0 12px}
+
+.macro{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;scrollbar-width:none}
+.macro::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:var(--surface);border-radius:12px;padding:8px 12px;min-width:92px}
+.chip b{display:block;font:600 18px/1.2 "IBM Plex Sans Condensed",sans-serif}
+.chip span{font-size:12px;color:var(--muted)}
+
+.controls{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;padding:6px 0 10px}
+.profile{display:grid;grid-template-columns:repeat(3,1fr);background:var(--neutral-soft);border-radius:12px;padding:3px;margin-bottom:10px}
+.profile button{border:0;background:transparent;padding:8px 4px;border-radius:9px;font-size:14px;cursor:pointer;color:var(--muted)}
+.profile button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(21,38,63,.12)}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 14px;font-size:14px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+h2{font:600 18px/1.3 "IBM Plex Sans Condensed",sans-serif;margin:22px 0 4px}
+.hint{color:var(--muted);font-size:13px;margin:0 0 10px}
+.empty{color:var(--muted);font-size:14px;padding:14px;background:var(--surface);border-radius:12px}
+
+.list{background:var(--surface);border-radius:16px;overflow:hidden}
+.row{border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;padding:12px 14px;cursor:pointer}
+.row>button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.code{font:600 17px/1.2 "IBM Plex Sans Condensed",sans-serif}
+.name{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.price{text-align:right;font-weight:600}
+.var{text-align:right;font-size:13px}
+.up{color:var(--buy)} .down{color:var(--sell)}
+.signal-line{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:6px}
+.badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.b-buy{background:var(--buy-soft);color:var(--buy)}
+.b-sell{background:var(--sell-soft);color:var(--sell)}
+.b-neutral{background:var(--neutral-soft);color:var(--neutral)}
+.b-warn{background:var(--warn-soft);color:var(--warn)}
+
+/* Régua do sinal: o elemento-assinatura do app */
+.ruler{flex:1;position:relative;height:8px;border-radius:999px;background:linear-gradient(90deg,var(--sell) 0%,var(--neutral-soft) 45%,var(--neutral-soft) 55%,var(--buy) 100%);opacity:.9}
+.ruler i{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--surface);border:3px solid var(--ink);transform:translate(-50%,-50%)}
+
+.detail{padding:0 14px 14px;display:none}
+.row.open .detail{display:block}
+.reasons{list-style:none;margin:4px 0 10px;padding:0}
+.reasons li{display:grid;grid-template-columns:18px 1fr;gap:6px;font-size:14px;padding:3px 0}
+.reasons li::before{font-weight:600}
+.reasons li.p::before{content:"+";color:var(--buy)}
+.reasons li.m::before{content:"−";color:var(--sell)}
+.reasons li.n::before{content:"•";color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.stats div{background:var(--bg);border-radius:10px;padding:6px 8px}
+.stats b{display:block;font-size:14px}
+.stats span{font-size:11px;color:var(--muted)}
+svg.spark{width:100%;height:56px;display:block}
+
+.tag{font-size:12px;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:13px;line-height:1.55}
+footer p{margin:0 0 10px}
+footer details{background:var(--surface);border-radius:12px;padding:10px 14px;margin-bottom:10px}
+footer summary{cursor:pointer;color:var(--ink);font-weight:500}
+@media (prefers-reduced-motion:no-preference){.row.open .detail{animation:open .18s ease-out}@keyframes open{from{opacity:0;transform:translateY(-4px)}to{opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Monitor de investimentos</h1>
+      <div class="updated" id="updated">Carregando…</div>
+    </div>
+    <button class="refresh" id="refresh" type="button">Atualizar</button>
+  </header>
+  <div id="banner"></div>
+  <div class="macro" id="macro" aria-label="Indicadores da economia"></div>
+
+  <div class="controls">
+    <div class="profile" role="group" aria-label="Seu perfil de risco" id="profile">
+      <button type="button" data-p="conservador">Conservador</button>
+      <button type="button" data-p="moderado">Moderado</button>
+      <button type="button" data-p="arrojado">Arrojado</button>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+
+  <main id="main"></main>
+
+  <footer>
+    <details>
+      <summary>Como ler os sinais</summary>
+      <p>Cada ativo recebe pontos por regras fixas: preço acima ou abaixo da média de 200 dias, média de 50 dias contra a de 200, RSI (se subiu ou caiu rápido demais), rendimento em 12 meses contra o CDI e, para FIIs e pagadoras, proventos contra o CDI.</p>
+      <p>A régua vai de venda (esquerda) a compra (direita). Toque em um ativo para ver exatamente por que ele recebeu aquele sinal.</p>
+      <p>No Tesouro, “Taxa alta” significa que a taxa de hoje está entre as maiores dos últimos 5 anos para aquele tipo de título.</p>
+    </details>
+    <details>
+      <summary>Como receber alertas no celular</summary>
+      <p>Instale o app gratuito ntfy (Android ou iPhone), toque em “+” e assine o mesmo tópico configurado no GitHub. Os alertas chegam quando um ativo entra em sinal de compra ou venda, quando algo se move forte no dia, ou quando uma taxa do Tesouro fica alta.</p>
+    </details>
+    <p>Sinais calculados por regras automáticas sobre dados públicos (Banco Central, Tesouro Transparente e Yahoo Finance), com atraso de até 30 minutos. Não são recomendação de investimento nem garantia de resultado. Antes de comprar, confira notícias e o seu objetivo para aquele dinheiro.</p>
+  </footer>
+</div>
+
+<script>
+const ABAS = ["Resumo","Renda fixa","Ações","FIIs","ETFs","Cripto e câmbio"];
+const RISCO_PERFIL = {conservador:["baixo"], moderado:["baixo","médio"], arrojado:["baixo","médio","alto"]};
+let DATA = null;
+let aba = localGet("aba") || "Resumo";
+let perfil = localGet("perfil") || "moderado";
+
+function localGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function localSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+const fmt = (v,c=2) => v==null ? "—" : Number(v).toLocaleString("pt-BR",{minimumFractionDigits:c,maximumFractionDigits:c});
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function badgeClass(s){
+  if (s==="COMPRA"||s==="VIÉS DE ALTA"||s==="ATRATIVO") return "b-buy";
+  if (s==="VENDA"||s==="VIÉS DE BAIXA") return "b-sell";
+  if (s==="RESERVA") return "b-warn";
+  return "b-neutral";
+}
+function badgeText(s){
+  return ({"COMPRA":"Compra","VIÉS DE ALTA":"Viés de alta","NEUTRO":"Neutro","VIÉS DE BAIXA":"Viés de baixa","VENDA":"Venda","ATRATIVO":"Taxa alta","RESERVA":"Reserva"})[s] || s;
+}
+
+function spark(values, up){
+  const v = (values||[]).filter(x => x!=null);
+  if (v.length < 2) return "";
+  const min = Math.min(...v), max = Math.max(...v), w = 300, h = 56, r = max-min || 1;
+  const pts = v.map((y,i) => `${(i/(v.length-1)*w).toFixed(1)},${(h-4-(y-min)/r*(h-8)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(${up?"--buy":"--sell"})" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function rowAtivo(a){
+  const pos = Math.max(0, Math.min(100, (a.score + 4) / 9 * 100));
+  const vc = a.var_dia > 0 ? "up" : a.var_dia < 0 ? "down" : "";
+  const sinal = a.var_dia > 0 ? "+" : "";
+  const reasons = (a.motivos||[]).map(m => `<li class="${m.tipo==="+"?"p":m.tipo==="-"?"m":"n"}">${esc(m.texto)}</li>`).join("");
+  const up = a.spark && a.spark.length>1 ? a.spark[a.spark.length-1] >= a.spark[0] : true;
+  return `<div class="row">
+    <button type="button" aria-expanded="false">
+      <div><div class="code">${esc(a.codigo)}</div><div class="name">${esc(a.nome)}</div></div>
+      <div><div class="price">${a.moeda} ${fmt(a.preco)}</div><div class="var ${vc}">${sinal}${fmt(a.var_dia)}% hoje</div></div>
+      <div class="signal-line"><span class="badge ${badgeClass(a.sinal)}">${badgeText(a.sinal)}</span>
+        <div class="ruler" role="img" aria-label="Pontuação ${a.score} numa escala de -4 a +5"><i style="left:${pos}%"></i></div>
+        <span class="tag">risco ${esc(a.risco)}</span></div>
+    </button>
+    <div class="detail">
+      <ul class="reasons">${reasons}</ul>
+      ${spark(a.spark, up)}
+      <div class="stats">
+        <div><b>${a.ret_12m==null?"—":fmt(a.ret_12m,1)+"%"}</b><span>12 meses</span></div>
+        <div><b>${a.queda_max_12m==null?"—":fmt(a.queda_max_12m,1)+"%"}</b><span>da máxima</span></div>
+        <div><b>${a.volatilidade==null?"—":fmt(a.volatilidade,0)+"%"}</b><span>volatilidade</span></div>
+        <div><b>${a.rsi==null?"—":fmt(a.rsi,0)}</b><span>RSI</span></div>
+        <div><b>${fmt(a.sma200)}</b><span>média 200d</span></div>
+        <div><b>${a.dy==null?"—":fmt(a.dy,1)+"%"}</b><span>proventos 12m</span></div>
+      </div>
+      <div class="tag">Cotação de ${esc(a.data)}</div>
+    </div>
+  </div>`;
+}
+
+function riscoTesouro(t){ return t.risco.startsWith("baixo") ? "baixo" : t.risco.startsWith("médio") ? "médio" : "alto"; }
+
+function rowTesouro(t){
+  return `<div class="row">
+    <button type="button" aria-expanded="false">
+      <div><div class="code">${esc(t.tipo.replace("Tesouro ",""))} ${esc(t.vencimento.slice(-4))}</div><div class="name">${esc(t.tipo)}, vence ${esc(t.vencimento)}</div></div>
+      <div><div class="price">${t.tipo.includes("Selic") ? "Selic + " : ""}${fmt(t.taxa)}%</div><div class="var">ao ano</div></div>
+      <div class="signal-line"><span class="badge ${badgeClass(t.sinal)}">${badgeText(t.sinal)}</span>
+        <span class="tag">${t.percentil_5a==null||t.tipo.includes("Selic")?"":"percentil "+fmt(t.percentil_5a,0)+" em 5 anos · "}risco ${esc(t.risco)}</span></div>
+    </button>
+    <div class="detail">
+      <ul class="reasons"><li class="n">${esc(t.explicacao)}</li></ul>
+      <div class="stats">
+        <div><b>R$ ${fmt(t.preco)}</b><span>preço do título</span></div>
+        <div><b>${fmt(t.anos,1)}</b><span>anos até vencer</span></div>
+        <div><b>${t.percentil_5a==null?"—":fmt(t.percentil_5a,0)}</b><span>percentil 5 anos</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function lista(itens, render, vazio){
+  if (!itens.length) return `<div class="empty">${vazio}</div>`;
+  return `<div class="list">${itens.map(render).join("")}</div>`;
+}
+
+function filtraPerfil(arr){ const ok = RISCO_PERFIL[perfil]; return arr.filter(a => ok.includes(a.risco)); }
+
+function render(){
+  const main = document.getElementById("main");
+  if (!DATA){ return; }
+  const ativos = DATA.ativos || [];
+  const tes = (DATA.tesouro && DATA.tesouro.titulos) || [];
+  const tesPerfil = tes.filter(t => RISCO_PERFIL[perfil].includes(riscoTesouro(t)));
+  let html = "";
+
+  if (aba === "Resumo"){
+    const vis = filtraPerfil(ativos);
+    const compra = vis.filter(a => a.score >= 3).sort((a,b)=>b.score-a.score);
+    const venda = vis.filter(a => a.score <= -3).sort((a,b)=>a.score-b.score);
+    const rf = tesPerfil.filter(t => t.sinal==="ATRATIVO" || t.sinal==="RESERVA").sort((a,b)=>(b.sinal==="ATRATIVO")-(a.sinal==="ATRATIVO"));
+    const mov = [...vis].filter(a=>a.var_dia!=null).sort((a,b)=>Math.abs(b.var_dia)-Math.abs(a.var_dia)).slice(0,4);
+    html += `<h2>Renda fixa em destaque</h2><p class="hint">Base de qualquer carteira. Comece por aqui se ainda não tem reserva.</p>`
+      + lista(rf, rowTesouro, "Nenhum título em destaque agora.");
+    html += `<h2>Sinais de compra</h2><p class="hint">Ativos que somaram 3 pontos ou mais pelas regras. Toque para ver os motivos.</p>`
+      + lista(compra, rowAtivo, perfil==="conservador" ? "No perfil conservador quase não aparecem ativos de renda variável. Troque para moderado ou arrojado para ver mais." : "Nenhum ativo com sinal forte de compra agora.");
+    html += `<h2>Sinais de venda</h2><p class="hint">Se você tem algum destes, vale revisar se ainda faz sentido manter.</p>`
+      + lista(venda, rowAtivo, "Nenhum ativo com sinal forte de venda agora.");
+    html += `<h2>Maiores movimentos de hoje</h2>` + lista(mov, rowAtivo, "Sem movimentos para mostrar.");
+  } else if (aba === "Renda fixa"){
+    const m = DATA.macro || {};
+    html += `<h2>Tesouro Direto</h2><p class="hint">Taxas de compra de ${esc(DATA.tesouro ? DATA.tesouro.data_base : "—")}. Para comparar: CDB que paga 100% do CDI rende cerca de ${fmt(m.cdi_ano)}% ao ano antes do IR.</p>`
+      + lista(tes, rowTesouro, "Dados do Tesouro indisponíveis nesta atualização.");
+  } else {
+    const itens = filtraPerfil(ativos.filter(a => a.classe === aba)).sort((a,b)=>b.score-a.score);
+    const total = ativos.filter(a => a.classe === aba).length;
+    const oculto = total - itens.length;
+    html += `<h2>${esc(aba)}</h2><p class="hint">Do sinal mais forte de compra ao mais forte de venda.${oculto>0?` ${oculto} ${oculto>1?"ativos ocultos":"ativo oculto"} por ter risco acima do perfil ${perfil}.`:""}</p>`
+      + lista(itens, rowAtivo, total ? `Nenhum ativo desta classe cabe no perfil ${perfil}. Troque o perfil acima para ver todos.` : "Nenhum ativo desta classe no config.json.");
+  }
+  main.innerHTML = html;
+  main.querySelectorAll(".row>button").forEach(b => b.addEventListener("click", () => {
+    const row = b.parentElement, open = row.classList.toggle("open");
+    b.setAttribute("aria-expanded", open);
+  }));
+}
+
+function renderTopo(){
+  const m = DATA.macro || {};
+  const chips = [
+    ["Selic", m.selic_meta, "%"], ["CDI", m.cdi_ano, "%"], ["IPCA 12m", m.ipca_12m, "%"],
+    ["Juro real", m.juro_real, "%"], ["Dólar", m.dolar_ptax, ""]
+  ];
+  document.getElementById("macro").innerHTML = chips.map(([n,v,u]) =>
+    `<div class="chip"><b>${n==="Dólar"?"R$ ":""}${fmt(v)}${u}</b><span>${n}</span></div>`).join("");
+  document.getElementById("updated").textContent = DATA.demo ? "Dados de exemplo" : "Atualizado em " + DATA.atualizado;
+  const avisos = [];
+  if (DATA.demo) avisos.push("Dados de exemplo. Rode o monitor uma vez no GitHub (aba Actions) para ver dados reais.");
+  if (DATA.erros && DATA.erros.length) avisos.push(`${DATA.erros.length} ${DATA.erros.length>1?"fontes falharam":"fonte falhou"} nesta atualização; o restante está em dia.`);
+  document.getElementById("banner").innerHTML = avisos.map(a => `<div class="banner">${esc(a)}</div>`).join("");
+}
+
+function renderControles(){
+  document.querySelectorAll("#profile button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p===perfil));
+  document.getElementById("tabs").innerHTML = ABAS.map(t =>
+    `<button type="button" role="tab" aria-selected="${t===aba}" data-t="${t}">${t}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => {
+    aba = b.dataset.t; localSet("aba", aba); renderControles(); render(); window.scrollTo({top:0});
+  }));
+}
+document.querySelectorAll("#profile button").forEach(b => b.addEventListener("click", () => {
+  perfil = b.dataset.p; localSet("perfil", perfil); renderControles(); render();
+}));
+
+async function carregar(){
+  const btn = document.getElementById("refresh");
+  btn.textContent = "Atualizando…"; btn.disabled = true;
+  try{
+    const r = await fetch("data.json?t=" + Date.now(), {cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    DATA = await r.json();
+    renderTopo(); render();
+  }catch(e){
+    document.getElementById("updated").textContent = "Sem dados";
+    document.getElementById("main").innerHTML = `<div class="empty">Não foi possível ler data.json (${esc(e.message)}). Confira se o GitHub Pages está ativo e se o monitor já rodou ao menos uma vez na aba Actions.</div>`;
+  }finally{ btn.textContent = "Atualizar"; btn.disabled = false; }
+}
+document.getElementById("refresh").addEventListener("click", carregar);
+renderControles(); carregar();
+setInterval(carregar, 5 * 60 * 1000);
+</script>
+</body>
+</html>

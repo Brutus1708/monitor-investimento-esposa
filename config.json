@@ -1,0 +1,36 @@
+{
+  "alertas": {
+    "variacao_dia_pct": 4,
+    "avisar_sinal_compra": true,
+    "avisar_sinal_venda": true,
+    "tesouro_percentil_atrativo": 80,
+    "max_alertas_por_rodada": 8
+  },
+  "ativos": [
+    {"ticker": "PETR4.SA", "nome": "Petrobras PN", "classe": "Ações"},
+    {"ticker": "VALE3.SA", "nome": "Vale ON", "classe": "Ações"},
+    {"ticker": "ITUB4.SA", "nome": "Itaú Unibanco PN", "classe": "Ações"},
+    {"ticker": "BBAS3.SA", "nome": "Banco do Brasil ON", "classe": "Ações"},
+    {"ticker": "BBDC4.SA", "nome": "Bradesco PN", "classe": "Ações"},
+    {"ticker": "WEGE3.SA", "nome": "WEG ON", "classe": "Ações"},
+    {"ticker": "ABEV3.SA", "nome": "Ambev ON", "classe": "Ações"},
+    {"ticker": "B3SA3.SA", "nome": "B3 ON", "classe": "Ações"},
+    {"ticker": "SUZB3.SA", "nome": "Suzano ON", "classe": "Ações"},
+    {"ticker": "TAEE11.SA", "nome": "Taesa Unit", "classe": "Ações", "dividendos": true},
+    {"ticker": "EGIE3.SA", "nome": "Engie Brasil ON", "classe": "Ações", "dividendos": true},
+    {"ticker": "HGLG11.SA", "nome": "CSHG Logística", "classe": "FIIs", "dividendos": true},
+    {"ticker": "KNRI11.SA", "nome": "Kinea Renda Imobiliária", "classe": "FIIs", "dividendos": true},
+    {"ticker": "MXRF11.SA", "nome": "Maxi Renda", "classe": "FIIs", "dividendos": true},
+    {"ticker": "XPML11.SA", "nome": "XP Malls", "classe": "FIIs", "dividendos": true},
+    {"ticker": "KNCR11.SA", "nome": "Kinea Rendimentos (papel)", "classe": "FIIs", "dividendos": true},
+    {"ticker": "BTLG11.SA", "nome": "BTG Logística", "classe": "FIIs", "dividendos": true},
+    {"ticker": "BOVA11.SA", "nome": "Ibovespa", "classe": "ETFs"},
+    {"ticker": "SMAL11.SA", "nome": "Small Caps", "classe": "ETFs"},
+    {"ticker": "DIVO11.SA", "nome": "Dividendos", "classe": "ETFs"},
+    {"ticker": "IVVB11.SA", "nome": "S&P 500 em reais", "classe": "ETFs"},
+    {"ticker": "GOLD11.SA", "nome": "Ouro", "classe": "ETFs"},
+    {"ticker": "BTC-USD", "nome": "Bitcoin (US$)", "classe": "Cripto e câmbio"},
+    {"ticker": "ETH-USD", "nome": "Ethereum (US$)", "classe": "Cripto e câmbio"},
+    {"ticker": "BRL=X", "nome": "Dólar em reais", "classe": "Cripto e câmbio"}
+  ]
+}
