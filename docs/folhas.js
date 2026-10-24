@@ -610,7 +610,8 @@ function ferrConfig() {
   const d = S.data, cfg = (d && d.alertas_cfg) || null, repo = linkRepo();
   return { titulo: "Ativos e alertas", html: `<section class="sec" style="margin-top:0"><div class="sec-h"><h2>Regras dos alertas</h2></div>
       ${cfg ? `<div class="card"><ul class="kv"><li><span>Avisar quando entrar em Compra</span><b>${cfg.avisar_sinal_compra ? "Sim" : "Não"}</b></li><li><span>Avisar quando entrar em Venda</span><b>${cfg.avisar_sinal_venda ? "Sim" : "Não"}</b></li>
-        <li><span>Movimento forte no dia</span><b>${pct(cfg.variacao_dia_pct, 0)} ou mais</b></li><li><span>Tesouro “taxa alta” a partir do percentil</span><b>${fmt(cfg.tesouro_percentil_atrativo, 0)}</b></li>
+        <li><span>Movimento forte no dia</span><b>${pct(cfg.variacao_dia_pct, 0)} ou mais</b></li>
+        <li><span>Movimento forte em cripto</span><b>${pct(cfg.variacao_dia_pct_cripto ?? 8, 0)} ou mais</b></li><li><span>Tesouro “taxa alta” a partir do percentil</span><b>${fmt(cfg.tesouro_percentil_atrativo, 0)}</b></li>
         <li><span>Máximo por rodada (acima vira resumo)</span><b>${fmt(cfg.max_alertas_por_rodada, 0)}</b></li><li><span>Ativos com alerta ligado</span><b>${d.ativos.filter(a => a.alerta).length}</b></li></ul></div>` : `<div class="empty">As regras aparecem depois da próxima atualização.</div>`}</section>
     <section class="sec"><div class="sec-h"><h2>Ativos acompanhados</h2></div><div class="card small">${d ? CATS_ATIVOS.map(c => `<p><b>${CATS[c].nome} (${(d.porCat[c] || []).length})</b></p>`).join("") : ""}<p class="muted">Os ativos com alerta ligado avisam no celular; os demais aparecem só no app.</p></div></section>
     <section class="sec"><div class="sec-h"><h2>Como mudar</h2></div><div class="card small"><ol style="margin:0;padding-left:20px">

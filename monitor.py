@@ -719,13 +719,19 @@ def montar_alertas(ativos, tesouro, cfg, estado, motivos):
         antes = anteriores.get(a["ticker"])
         motivo = motivos.get(a["ticker"], "")
         preco = f"{a['moeda']} {br(a['preco'], 2 if a['preco'] >= 10 else 4)}"
+        if a.get("moeda") == "pts":
+            preco = f"{br(a['preco'], 0)} pontos"
+        # Cripto oscila muito mais: usa um limite próprio para "movimento forte"
+        limite_mov = lim.get("variacao_dia_pct_cripto", 8) if a.get("cat") == "cripto" else lim["variacao_dia_pct"]
+        if a.get("cat") == "indices":
+            antes = a["sinal"]  # índice não se compra: avisa só movimento forte, não sinal
         if a["sinal"] == "COMPRA" and antes != "COMPRA" and lim.get("avisar_sinal_compra"):
             novo(f"{a['ticker']}|compra|{hoje}", f"Sinal de compra: {a['codigo']}",
                  f"{a['nome']} a {preco}. {motivo}", 4, ["green_circle"])
         if a["sinal"] == "VENDA" and antes != "VENDA" and lim.get("avisar_sinal_venda"):
             novo(f"{a['ticker']}|venda|{hoje}", f"Sinal de venda: {a['codigo']}",
                  f"{a['nome']} a {preco}. {motivo}", 4, ["red_circle"])
-        if a["var_dia"] is not None and abs(a["var_dia"]) >= lim["variacao_dia_pct"]:
+        if a["var_dia"] is not None and abs(a["var_dia"]) >= limite_mov:
             direcao = "sobe" if a["var_dia"] > 0 else "cai"
             novo(f"{a['ticker']}|mov|{hoje}", f"{a['codigo']} {direcao} {br(abs(a['var_dia']), 1)}% hoje",
                  f"{a['nome']} a {preco}. Movimento forte: confira notícias antes de agir.",
