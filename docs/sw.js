@@ -1,9 +1,9 @@
 // Service worker: busca sempre na rede primeiro e guarda uma cópia para abrir sem internet.
-const CACHE = "monitor-v2";
-const ARQUIVOS = ["./", "index.html", "app.css", "app.js", "manifest.json", "icon.svg", "data.json"];
+const CACHE = "monitor-v3";
+const ARQUIVOS = ["./", "index.html", "app.css", "core.js", "telas.js", "folhas.js", "main.js", "manifest.json", "icon.svg", "data.json", "noticias.json"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQUIVOS)).catch(() => {}).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {

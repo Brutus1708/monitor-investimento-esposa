@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Monitor de Investimentos</title>
-<meta name="description" content="Acompanhe Tesouro Direto, ações, FIIs, ETFs, cripto e dólar com sinais explicados, carteira e simuladores.">
-<meta name="theme-color" content="#EEF2F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0C1524" media="(prefers-color-scheme: dark)">
+<title>Monitor · Investimentos</title>
+<meta name="description" content="Ações, FIIs, ETFs, BDRs, ações globais, cripto, fundos, Tesouro Direto e renda fixa em um só lugar, com sinais explicados, notícias, carteira e simuladores.">
+<meta name="theme-color" content="#F2EFE9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#06080E" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Monitor">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=2">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css?v=3">
 <script>
   // Aplica o tema salvo antes de desenhar a página, para não piscar
   try { var t = JSON.parse(localStorage.getItem("mi:tema")); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
@@ -31,14 +31,13 @@
 <div class="app">
   <header class="top">
     <div class="top-l">
+      <button type="button" class="back" id="back" data-act="voltar-sub" hidden></button>
       <h1 id="titulo">Início</h1>
-      <button type="button" class="status" id="status" data-act="sheet" data-sheet="status">
-        <i class="dot"></i><span>Carregando…</span>
-      </button>
+      <button type="button" class="status" id="status" data-act="sheet" data-sheet="status"><i class="dot"></i><span>Carregando…</span></button>
     </div>
     <div class="top-r">
+      <button type="button" class="icon-btn" id="btn-busca" data-act="sheet" data-sheet="busca" aria-label="Buscar"></button>
       <button type="button" class="icon-btn" id="btn-refresh" data-act="refresh" aria-label="Atualizar dados"></button>
-      <button type="button" class="icon-btn" data-act="sheet" data-sheet="ajustes" aria-label="Ajustes"></button>
     </div>
   </header>
   <div id="banner"></div>
@@ -57,6 +56,9 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <noscript><p style="padding:16px">Este app precisa de JavaScript ativado.</p></noscript>
-<script src="app.js?v=2"></script>
+<script src="core.js?v=3"></script>
+<script src="telas.js?v=3"></script>
+<script src="folhas.js?v=3"></script>
+<script src="main.js?v=3"></script>
 </body>
 </html>

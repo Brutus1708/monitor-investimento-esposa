@@ -1,1 +1,8 @@
 .claude/
+__pycache__/
+# Gerados a cada rodada e publicados direto no site (não vão para o repositório)
+docs/data.json
+docs/hist/
+docs/noticias.json
+docs/fundos.json
+docs/state.json

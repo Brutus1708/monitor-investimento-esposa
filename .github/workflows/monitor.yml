@@ -2,14 +2,20 @@ name: Monitor de Investimentos
 
 on:
   schedule:
-    # A cada 30 min, seg-sex, das 9h às 18h (horário de Brasília = UTC-3)
+    # Pregão: a cada 30 min, seg-sex, das 9h às 18h (Brasília = UTC-3)
     - cron: "*/30 12-21 * * 1-5"
-    # Fim de semana: 2x por dia (cripto não para)
-    - cron: "0 13,21 * * 0,6"
+    # Fora do pregão: de hora em hora (cripto, câmbio e notícias não param)
+    - cron: "0 0-11,22,23 * * 1-5"
+    - cron: "0 * * * 0,6"
+  push:
+    branches: [main]
   workflow_dispatch: {}
 
+# O site é publicado direto pelo GitHub Actions: nada é gravado no repositório a cada rodada
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: monitor
@@ -18,11 +24,14 @@ concurrency:
 jobs:
   monitorar:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -35,9 +44,12 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           PAGES_URL: ${{ vars.PAGES_URL }}
 
-      - name: Salvar resultados
-        run: |
-          git config user.name "monitor-bot"
-          git config user.email "monitor-bot@users.noreply.github.com"
-          git add docs/data.json state.json
-          git diff --staged --quiet || (git commit -m "Atualiza dados $(date -u +%F_%H%M)" && git pull --rebase && git push)
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+      - name: Publicar site
+        id: publicar
+        uses: actions/deploy-pages@v4
