@@ -338,8 +338,10 @@ function sheetStatus() {
       <li><span>Notícias</span><b>${S.noticias ? (S.noticias.itens || []).length + " · " + esc(S.noticias.atualizado || "") : "—"}</b></li></ul></div>
     <section class="sec"><div class="sec-h"><h2>Avisos da última rodada</h2></div>
     ${erros.length ? `<div class="list"><ul class="alerts">${erros.map(e => `<li><span>${esc(e)}</span></li>`).join("")}</ul></div><p class="small muted" style="margin-top:8px">Quando uma fonte falha, o app mantém o último dado bom dela e mostra o resto normalmente.</p>` : `<div class="empty">Todas as fontes responderam normalmente.</div>`}</section>
-    <div class="card" style="margin-top:14px"><h3>Quando os dados mudam?</h3><p class="small muted">A cada 30 minutos no pregão (9h às 18h, dias úteis) e de hora em hora no resto do tempo. O app busca novidades sozinho a cada 5 minutos e quando você volta a ele.</p>
-      <div class="btns"><button class="btn primary sm" data-act="refresh">${ic("refresh")}Buscar agora</button>${linkRepo() ? `<a class="btn sm ghost" href="${linkRepo()}/actions" target="_blank" rel="noopener">${ic("externo")}Execuções no GitHub</a>` : ""}</div></div>` };
+    <div class="card" style="margin-top:14px"><h3>Quando os dados mudam?</h3><p class="small muted">O monitor pede para rodar a cada 15 minutos, mas o agendador gratuito do GitHub atrasa ou pula execuções quando está sobrecarregado; o normal é algo entre 30 minutos e 1 hora. O botão Atualizar busca a última rodada publicada; ele não faz o monitor rodar.</p>
+      <p class="small muted">Fim de semana e feriado: a bolsa fecha, então ações, FIIs e ETFs mostram a cotação do último pregão. Cripto, câmbio no exterior e notícias continuam mudando.</p>
+      <div class="btns"><button class="btn primary sm" data-act="refresh">${ic("refresh")}Buscar agora</button>${linkRepo() ? `<a class="btn sm" href="${linkRepo()}/actions/workflows/monitor.yml" target="_blank" rel="noopener">${ic("externo")}Rodar o monitor agora</a>` : ""}</div>
+      ${linkRepo() ? `<p class="small muted" style="margin-top:10px">Em “Rodar o monitor agora”: botão “Run workflow” → “Run workflow” (precisa estar logado no GitHub). Em uns 2 minutos os dados novos chegam aqui.</p>` : ""}</div>` };
 }
 
 // =============================================================== carteira: adicionar/editar

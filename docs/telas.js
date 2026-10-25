@@ -23,7 +23,7 @@ function renderTopo() {
   if (d) {
     const idade = d.quando ? Date.now() - d.quando : Infinity;
     if (S.origem === "cache") { cls = "err"; txt = "Offline · dados " + haQuanto(d.quando); }
-    else if (idade > 30 * 3600e3) { cls = "warn"; txt = "Desatualizado · " + haQuanto(d.quando); }
+    else if (idade > 3 * 3600e3) { cls = "warn"; txt = "Atrasado · atualizado " + haQuanto(d.quando); }
     else { cls = idade < 90 * 60e3 ? "ok" : ""; txt = "Atualizado " + haQuanto(d.quando); }
   } else if (S.erroCarga) { cls = "err"; txt = "Sem dados"; }
   st.className = "status " + cls;
@@ -35,7 +35,8 @@ function renderTopo() {
   requestAnimationFrame(() => document.documentElement.style.setProperty("--top-h", $(".top").offsetHeight + "px"));
   const avisos = [];
   if (d && S.origem === "cache") avisos.push(["err", "Sem conexão. Você está vendo os últimos dados salvos neste aparelho."]);
-  $("#banner").innerHTML = avisos.map(([c, t]) => `<div class="banner ${c}">${ic("info")}<span>${esc(t)}</span></div>`).join("");
+  else if (d && d.quando && Date.now() - d.quando > 3 * 3600e3) avisos.push(["", `A última rodada do monitor foi ${haQuanto(d.quando)}: o GitHub atrasou o agendamento.`, "status"]);
+  $("#banner").innerHTML = avisos.map(([c, t, folha]) => `<div class="banner ${c}">${ic("info")}<span>${esc(t)}</span>${folha ? `<button type="button" data-act="sheet" data-sheet="${folha}">Ver</button>` : ""}</div>`).join("");
 }
 function renderTudo() {
   renderTabbar();
